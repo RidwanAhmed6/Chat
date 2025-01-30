@@ -1,1 +1,66 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Chat Panel</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        #chat-box { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: scroll; }
+        .chat-msg { margin-bottom: 10px; padding: 5px; border-bottom: 1px solid #ddd; }
+        .reply-input { width: 80%; }
+        .reply-btn { margin-left: 5px; }
+    </style>
+  
+  <link rel="manifest" href="https://ridwanahmed6.github.io/Chat/">
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js');
+    }
+</script>
+
+  
+</head>
+<body>
+
+<h2>Admin Chat Panel</h2>
+<div id="chat-box"></div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycby_W17x3RQMI_NQo-J7shVI1_HuQB1K4oBHNfa7Rb-m3oDkLhrwZoSRGAdcdiIFRImr/exec"; 
+
+function loadMessages() {
+    fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "getMessages" }) })
+    .then(res => res.json())
+    .then(data => {
+        let chatBox = document.getElementById("chat-box");
+        chatBox.innerHTML = data.map(m => `
+            <div class="chat-msg">
+                <p><b>${m.sender}:</b> ${m.message}</p>
+                ${m.reply ? `<p><b>You (Admin):</b> ${m.reply}</p>` : 
+                `<input type="text" class="reply-input" id="reply-${m.sender}" placeholder="Type reply">
+                <button class="reply-btn" onclick="sendReply('${m.sender}')">Reply</button>`}
+            </div>
+        `).join("");
+    });
+}
+
+function sendReply(customer) {
+    let replyMsg = document.getElementById(`reply-${customer}`).value;
+    if (!replyMsg) return;
+
+    fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "sendReply", customer: customer, reply: replyMsg }),
+        headers: { "Content-Type": "application/json" }
+    }).then(() => {
+        loadMessages();
+    });
+}
+
+setInterval(loadMessages, 3000);
+</script>
+
+</body>
+</html>
