@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Popup Chat</title>
+    <style>
+        /* Floating Chat Button */
+        #chat-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: #007bff;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            line-height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Chat Popup Window */
+        #chat-popup {
+            display: none;
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 300px;
+            height: 400px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            border: 1px solid #ccc;
+        }
+
+        /* Chat Header */
+        #chat-header {
+            background: #007bff;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        /* Chat Messages */
+        #chat-box {
+            height: 300px;
+            padding: 10px;
+            overflow-y: auto;
+            background: #f9f9f9;
+        }
+
+        /* Chat Input */
+        #chat-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ccc;
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #send-btn {
+            margin-left: 5px;
+            padding: 5px 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Floating Button -->
+<div id="chat-toggle">💬</div>
+
+<!-- Chat Popup -->
+<div id="chat-popup">
+    <div id="chat-header">Chat App ✖</div>
+    <div id="chat-box"></div>
+    <div id="chat-input">
+        <input type="text" id="message-input" placeholder="Type a message">
+        <button id="send-btn">Send</button>
+    </div>
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycby_W17x3RQMI_NQo-J7shVI1_HuQB1K4oBHNfa7Rb-m3oDkLhrwZoSRGAdcdiIFRImr/exec"; // Replace with your Apps Script URL
+
+// Toggle Chat Popup
+document.getElementById("chat-toggle").addEventListener("click", () => {
+    let chatPopup = document.getElementById("chat-popup");
+    chatPopup.style.display = (chatPopup.style.display === "none" || chatPopup.style.display === "") ? "block" : "none";
+});
+
+// Close Chat When Clicking Header
+document.getElementById("chat-header").addEventListener("click", () => {
+    document.getElementById("chat-popup").style.display = "none";
+});
+
+// Send Message to Google Apps Script
+function sendMessage() {
+    let msg = document.getElementById("message-input").value;
+    if (!msg) return;
+
+    fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "sendMessage", sender: "User1", message: msg }),
+        headers: { "Content-Type": "application/json" }
+    }).then(() => {
+        document.getElementById("message-input").value = "";
+        loadMessages();
+    });
+}
+
+// Load Messages from Google Apps Script
+function loadMessages() {
+    fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "getMessages" }) })
+    .then(res => res.json())
+    .then(data => {
+        let chatBox = document.getElementById("chat-box");
+        chatBox.innerHTML = data.map(m => `<p><b>${m.sender}:</b> ${m.message}</p>`).join("");
+        chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to latest message
+    });
+}
+
+document.getElementById("send-btn").addEventListener("click", sendMessage);
+setInterval(loadMessages, 3000); // Refresh chat every 3 seconds
+</script>
+
+</body>
+</html>
